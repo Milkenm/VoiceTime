@@ -20,6 +20,7 @@ namespace VoiceTime
 
 		private static void Main(string[] args)
 		{
+			Console.Title = $"VoiceTime {GetVersion()}";
 			Application.ApplicationExit += new EventHandler((se, ev) =>
 			{
 				bot.StopAsync().Wait();
@@ -100,7 +101,7 @@ namespace VoiceTime
 				},
 				Footer = new EmbedFooterBuilder()
 				{
-					Text = $"VoiceTime v{Assembly.GetExecutingAssembly().GetName().Version}",
+					Text = $"VoiceTime {GetVersion()}",
 				},
 				Color = Color.Green,
 				ThumbnailUrl = user.GetAvatarUrl(),
@@ -117,6 +118,11 @@ namespace VoiceTime
 				IMessageChannel channel = bot.Client.GetChannel(channelId) as IMessageChannel;
 				channel.SendMessageAsync(embed: embed).GetAwaiter();
 			}
+		}
+
+		private static string GetVersion()
+		{
+			return $"v{Assembly.GetExecutingAssembly().GetName().Version}";
 		}
 
 		private static Task Client_Log(LogMessage arg)
