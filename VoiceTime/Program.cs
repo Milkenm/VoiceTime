@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 using Discord;
 using Discord.WebSocket;
@@ -14,13 +15,16 @@ namespace VoiceTime
 {
 	internal class Program
 	{
-		private const long ChannelId = 1087320120109576252L;
-
 		private static DiscordBot bot = new DiscordBot(Assembly.GetEntryAssembly());
 		private static Dictionary<SocketUser, long> UsersInVoice = new Dictionary<SocketUser, long>();
 
 		private static void Main(string[] args)
 		{
+			Application.ApplicationExit += new EventHandler((se, ev) =>
+			{
+				bot.StopAsync().Wait();
+			});
+
 			bot.Client.Log += Client_Log;
 			bot.Client.UserVoiceStateUpdated += Client_UserVoiceStateUpdated;
 
@@ -96,7 +100,7 @@ namespace VoiceTime
 				},
 				Footer = new EmbedFooterBuilder()
 				{
-					Text = "VoiceTime",
+					Text = $"VoiceTime v{Assembly.GetExecutingAssembly().GetName().Version}",
 				},
 				Color = Color.Green,
 				ThumbnailUrl = user.GetAvatarUrl(),
@@ -106,19 +110,13 @@ namespace VoiceTime
 			SendEmbed(embed.Build());
 		}
 
-		private static IMessageChannel GetChannel()
-		{
-			return bot.Client.GetChannel(ChannelId) as IMessageChannel;
-		}
-
-		private static void SendMessage(string message)
-		{
-			GetChannel().SendMessageAsync(message).GetAwaiter();
-		}
-
 		private static void SendEmbed(Embed embed)
 		{
-			GetChannel().SendMessageAsync(embed: embed).GetAwaiter();
+			foreach (ulong channelId in bot.DebugChannels)
+			{
+				IMessageChannel channel = bot.Client.GetChannel(channelId) as IMessageChannel;
+				channel.SendMessageAsync(embed: embed).GetAwaiter();
+			}
 		}
 
 		private static Task Client_Log(LogMessage arg)
