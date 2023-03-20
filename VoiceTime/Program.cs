@@ -14,10 +14,12 @@ namespace VoiceTime
 {
 	internal class Program
 	{
-		static DiscordBot bot = new DiscordBot(Assembly.GetEntryAssembly());
-		static Dictionary<SocketUser, long> voiceActivity = new Dictionary<SocketUser, long>();
+		private const long ChannelId = 742869012983054486;
 
-		static void Main(string[] args)
+		private static DiscordBot bot = new DiscordBot(Assembly.GetEntryAssembly());
+		private static Dictionary<SocketUser, long> UsersInVoice = new Dictionary<SocketUser, long>();
+
+		private static void Main(string[] args)
 		{
 			bot.Client.Log += Client_Log;
 			bot.Client.UserVoiceStateUpdated += Client_UserVoiceStateUpdated;
@@ -45,13 +47,13 @@ namespace VoiceTime
 
 		private static void OnVoiceJoin(SocketUser user)
 		{
-			voiceActivity.Add(user, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-			SendMessage(user.Mention + " entrou no voice.");
+			UsersInVoice.Add(user, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 		}
 
 		private static void OnVoiceLeave(SocketUser user)
 		{
-			long secondsInVoice = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - voiceActivity[user];
+			long secondsInVoice = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - UsersInVoice[user];
+			UsersInVoice.Remove(user);
 
 			// Save session
 			VoiceSession session = new VoiceSession(user.Id, secondsInVoice);
@@ -68,14 +70,55 @@ namespace VoiceTime
 			}
 			vt.SaveToDatabase();
 
-			SendMessage(user.Mention + $" saiu do voice ({TimeSpan.FromSeconds(secondsInVoice).ToString("HHh:MMm:SSs")}, total: {TimeSpan.FromSeconds(vt.GetTotalTime()).ToString("HHh:MMm:SSs")}).");
+			// Format time strings
+			string sessionTime = string.Format("{0:%h} horas, {0:%m} minutos, {0:%s} segundos", TimeSpan.FromSeconds(secondsInVoice));
+			string totalTime = string.Format("{0:%d} dias, {0:%h} horas, {0:%m} dias, {0:%s} segundos", TimeSpan.FromSeconds(vt.GetTotalTime()));
+
+			// Create the embed
+			EmbedBuilder embed = new EmbedBuilder
+			{
+				Title = "VoiceTime",
+				Description = $"{user.Mention}, está aqui o tempo que já desperdiçaste nos voice channels deste maravilhoso servidor.",
+				Fields =
+				{
+					new EmbedFieldBuilder()
+					{
+						Name= "Sessão",
+						Value=sessionTime,
+						IsInline=false
+					},
+					new EmbedFieldBuilder()
+					{
+						Name="Total",
+						Value=totalTime,
+						IsInline=false
+					}
+				},
+				Footer = new EmbedFooterBuilder()
+				{
+					Text = "VoiceTime",
+				},
+				Color = Color.Green,
+				ThumbnailUrl = user.GetAvatarUrl(),
+			};
+
+			// Send to channel
+			SendEmbed(embed.Build());
+		}
+
+		private static IMessageChannel GetChannel()
+		{
+			return bot.Client.GetChannel(ChannelId) as IMessageChannel;
 		}
 
 		private static void SendMessage(string message)
 		{
+			GetChannel().SendMessageAsync(message).GetAwaiter();
+		}
 
-			var channel = bot.Client.GetChannel(742869012983054486) as IMessageChannel;
-			channel.SendMessageAsync(message).GetAwaiter();
+		private static void SendEmbed(Embed embed)
+		{
+			GetChannel().SendMessageAsync(embed: embed).GetAwaiter();
 		}
 
 		private static Task Client_Log(LogMessage arg)
