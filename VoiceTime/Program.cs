@@ -14,7 +14,7 @@ namespace VoiceTime
 {
 	internal class Program
 	{
-		private const long ChannelId = 742869012983054486;
+		private const long ChannelId = 1087320120109576252L;
 
 		private static DiscordBot bot = new DiscordBot(Assembly.GetEntryAssembly());
 		private static Dictionary<SocketUser, long> UsersInVoice = new Dictionary<SocketUser, long>();
