@@ -15,8 +15,8 @@ namespace VoiceTime
 {
 	internal class Program
 	{
-		private static DiscordBot bot = new DiscordBot(Assembly.GetEntryAssembly());
-		private static Dictionary<SocketUser, long> UsersInVoice = new Dictionary<SocketUser, long>();
+		private static readonly DiscordBot bot = new DiscordBot(Assembly.GetEntryAssembly());
+		private static readonly Dictionary<SocketUser, long> UsersInVoice = new Dictionary<SocketUser, long>();
 
 		private static void Main(string[] args)
 		{
@@ -81,10 +81,6 @@ namespace VoiceTime
 			}
 			vt.SaveToDatabase();
 
-			// Format time strings
-			string sessionTime = string.Format("{0:%h} horas, {0:%m} minutos, {0:%s} segundos", TimeSpan.FromSeconds(secondsInVoice));
-			string totalTime = string.Format("{0:%d} dias, {0:%h} horas, {0:%m} dias, {0:%s} segundos", TimeSpan.FromSeconds(vt.GetTotalTime()));
-
 			// Create the embed
 			EmbedBuilder embed = new EmbedBuilder
 			{
@@ -95,13 +91,13 @@ namespace VoiceTime
 					new EmbedFieldBuilder()
 					{
 						Name= "Sessão",
-						Value=sessionTime,
+						Value=GetTimeString(TimeSpan.FromSeconds(secondsInVoice)),
 						IsInline=false
 					},
 					new EmbedFieldBuilder()
 					{
 						Name="Total",
-						Value=totalTime,
+						Value=GetTimeString(TimeSpan.FromSeconds(vt.GetTotalTime())),
 						IsInline=false
 					}
 				},
@@ -135,6 +131,20 @@ namespace VoiceTime
 		{
 			Console.WriteLine(arg);
 			return Task.CompletedTask;
+		}
+
+		private static string GetTimeString(TimeSpan timeSpan)
+		{
+			return string.Format($"{0:%d} dia{AddPlural(timeSpan.Days)}, {0:%h} hora{AddPlural(timeSpan.Hours)}, {0:%m} minuto{AddPlural(timeSpan.Minutes)} e {0:%s} segundo{timeSpan.Seconds}", timeSpan);
+		}
+
+		private static string AddPlural(int num)
+		{
+			if (num != 1)
+			{
+				return "s";
+			}
+			return string.Empty;
 		}
 	}
 }
