@@ -135,7 +135,7 @@ namespace VoiceTime
 
 		private static string GetTimeString(TimeSpan timeSpan)
 		{
-			return string.Format($"{0:%d} dia{AddPlural(timeSpan.Days)}, {0:%h} hora{AddPlural(timeSpan.Hours)}, {0:%m} minuto{AddPlural(timeSpan.Minutes)} e {0:%s} segundo{timeSpan.Seconds}", timeSpan);
+			return string.Format("{0:%d} dia{1}, {0:%h} hora{2}, {0:%m} minuto{3} e {0:%s} segundo{4}", timeSpan, AddPlural(timeSpan.Days), AddPlural(timeSpan.Hours), AddPlural(timeSpan.Minutes), AddPlural(timeSpan.Seconds));
 		}
 
 		private static string AddPlural(int num)
