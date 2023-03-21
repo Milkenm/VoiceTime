@@ -36,6 +36,12 @@ namespace VoiceTime
 
 		private static async Task Client_UserVoiceStateUpdated(SocketUser user, SocketVoiceState previousChannel, SocketVoiceState newChannel)
 		{
+			// Ignore bots
+			if (user.IsBot || user.IsWebhook)
+			{
+				return;
+			}
+
 			// Join voice
 			if (previousChannel.VoiceChannel == null && newChannel.VoiceChannel != null)
 			{
