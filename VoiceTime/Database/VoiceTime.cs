@@ -23,26 +23,40 @@ namespace VoiceTime.Database
 		}
 
 		private ulong UserId { get; set; }
+		private ulong ServerId { get; set; }
 		private long TotalTime { get; set; }
 
-		public VoiceTime(ulong userId, long totalTime) : base(Db.SQLiteDatabase, "VoiceTime")
+		public VoiceTime(ulong userId, ulong serverId, long totalTime) : base(Db.SQLiteDatabase, "VoiceTime")
 		{
-			UserId = userId;
-			TotalTime = totalTime;
+			SetUserId(userId);
+			SetServerId(serverId);
+			SetTotalTime(totalTime);
 		}
 
-		public VoiceTime() : this(0, 0) { }
+		public VoiceTime() : this(0UL, 0UL, 0L) { }
 
-		[Getter("UserId")]
+		[Getter("UserID")]
 		public ulong GetUserId()
 		{
 			return UserId;
 		}
 
-		[Setter("UserId", typeof(ulong))]
+		[Setter("UserID", typeof(ulong))]
 		public void SetUserId(ulong userId)
 		{
 			UserId = userId;
+		}
+
+		[Getter("ServerID")]
+		public ulong GetServerId()
+		{
+			return ServerId;
+		}
+
+		[Setter("ServerID", typeof(ulong))]
+		public void SetServerId(ulong serverId)
+		{
+			ServerId = serverId;
 		}
 
 		[Getter("TotalTime")]

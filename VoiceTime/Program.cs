@@ -17,6 +17,7 @@ namespace VoiceTime
 	{
 		private static readonly DiscordBot bot = new DiscordBot(Assembly.GetEntryAssembly());
 		private static readonly Dictionary<SocketUser, long> UsersInVoice = new Dictionary<SocketUser, long>();
+		private static readonly Dictionary<SocketUser, long> LastVoiceMove = new Dictionary<SocketUser, long>();
 
 		private static void Main(string[] args)
 		{
@@ -31,7 +32,15 @@ namespace VoiceTime
 
 			bot.StartAsync();
 
-			Console.ReadKey();
+			// Initialize all users
+			foreach (SocketGuild guild in bot.Client.Guilds)
+				foreach (SocketVoiceChannel voiceChannel in guild.VoiceChannels)
+					foreach (SocketGuildUser connectedUser in voiceChannel.ConnectedUsers)
+					{
+						OnVoiceJoin(connectedUser);
+					}
+
+			Task.Delay(-1).Wait();
 		}
 
 		private static async Task Client_UserVoiceStateUpdated(SocketUser user, SocketVoiceState previousChannel, SocketVoiceState newChannel)
@@ -42,38 +51,55 @@ namespace VoiceTime
 				return;
 			}
 
+			// Change channels
+			if (previousChannel.VoiceChannel != null)
+			{
+				OnVoiceChange(user, previousChannel.VoiceChannel.Id, previousChannel.VoiceChannel.Guild.Id);
+			}
 			// Join voice
 			if (previousChannel.VoiceChannel == null && newChannel.VoiceChannel != null)
 			{
 				OnVoiceJoin(user);
-				return;
 			}
 			// Leave voice
-			if (previousChannel.VoiceChannel != null && newChannel.VoiceChannel == null)
+			else if (previousChannel.VoiceChannel != null && newChannel.VoiceChannel == null)
 			{
-				OnVoiceLeave(user);
-				return;
+				OnVoiceLeave(user, previousChannel.VoiceChannel.Guild.Id);
 			}
+		}
+
+		private static void OnVoiceChange(SocketUser user, ulong channelId, ulong guildId)
+		{
+			long unix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+			long secondsInChannel = unix - LastVoiceMove[user];
+
+			LastVoiceMove.Remove(user);
+			LastVoiceMove.Add(user, unix);
+
+			VoicePerChannel vpc = new VoicePerChannel(user.Id, channelId, guildId, secondsInChannel);
+			vpc.SaveToDatabase();
 		}
 
 		private static void OnVoiceJoin(SocketUser user)
 		{
 			UsersInVoice.Add(user, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+			LastVoiceMove.Add(user, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 		}
 
-		private static void OnVoiceLeave(SocketUser user)
+		private static void OnVoiceLeave(SocketUser user, ulong guildId)
 		{
 			long secondsInVoice = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - UsersInVoice[user];
 			UsersInVoice.Remove(user);
+			LastVoiceMove.Remove(user);
 
 			// Save session
-			VoiceSession session = new VoiceSession(user.Id, secondsInVoice);
+			VoiceSession session = new VoiceSession(user.Id, guildId, secondsInVoice);
 			session.SaveToDatabase();
 			// Save total time
 			Database.VoiceTime vt = Database.VoiceTime.Load(user.Id);
 			if (vt == null)
 			{
-				vt = new Database.VoiceTime(user.Id, secondsInVoice);
+				vt = new Database.VoiceTime(user.Id, guildId, secondsInVoice);
 			}
 			else
 			{

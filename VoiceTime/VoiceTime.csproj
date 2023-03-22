@@ -172,6 +172,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Database\Db.cs" />
+    <Compile Include="Database\VoicePerChannel.cs" />
     <Compile Include="Database\VoiceSession.cs" />
     <Compile Include="Database\VoiceTime.cs" />
     <Compile Include="Program.cs" />

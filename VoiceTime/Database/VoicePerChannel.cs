@@ -5,37 +5,39 @@ using ScriptsLibV2.Databases;
 
 namespace VoiceTime.Database
 {
-	internal class VoiceSession : DatabaseObject
+	internal class VoicePerChannel : DatabaseObject
 	{
-		public static VoiceSession Load(ulong userId)
+		public static VoicePerChannel Load(ulong userId)
 		{
-			DataTable selection = Db.SQLiteDatabase.Select("VoiceSessions", "ID", $"UserId = {userId}");
+			DataTable selection = Db.SQLiteDatabase.Select("VoicePerChannel", "ID", $"UserId = {userId}");
 
 			if (selection.Rows.Count > 0)
 			{
 				long id = Convert.ToInt32(selection.Rows[0]["ID"]);
 
-				VoiceSession vs = new VoiceSession();
-				vs.LoadFromDatabase(id);
-				return vs;
+				VoicePerChannel vpc = new VoicePerChannel();
+				vpc.LoadFromDatabase(id);
+				return vpc;
 			}
 			return null;
 		}
 
 		private ulong UserId { get; set; }
+		private ulong ChannelId { get; set; }
 		private ulong ServerId { get; set; }
 		private long TimeInVoice { get; set; }
 		private long Date { get; set; }
 
-		public VoiceSession(ulong userId, ulong serverId, long timeInVoice) : base(Db.SQLiteDatabase, "VoiceSessions")
+		public VoicePerChannel(ulong userId, ulong channelId, ulong serverId, long timeInVoice) : base(Db.SQLiteDatabase, "VoicePerChannel")
 		{
 			SetUserId(userId);
+			SetChannelId(channelId);
 			SetServerId(serverId);
 			SetTimeInVoice(timeInVoice);
 			SetDate(DateTimeOffset.UtcNow.Ticks);
 		}
 
-		public VoiceSession() : this(0UL, 0UL, 0L) { }
+		public VoicePerChannel() : this(0UL, 0UL, 0UL, 0L) { }
 
 		[Getter("UserID")]
 		public ulong GetUserId()
@@ -47,6 +49,18 @@ namespace VoiceTime.Database
 		public void SetUserId(ulong userId)
 		{
 			UserId = userId;
+		}
+
+		[Getter("ChannelID")]
+		public ulong GetChannelId()
+		{
+			return ChannelId;
+		}
+
+		[Setter("ChannelID", typeof(ulong))]
+		public void SetChannelId(ulong channelId)
+		{
+			ChannelId = channelId;
 		}
 
 		[Getter("ServerID")]
