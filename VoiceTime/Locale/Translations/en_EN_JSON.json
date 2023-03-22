@@ -1,0 +1,13 @@
+{
+	"description": "{0}, below is the time that you wasted on the voice channels of our amazing server!",
+	"session_title": "Session",
+	"total_title": "Total",
+	"day": "day",
+	"day_plural": "days",
+	"hour": "hour",
+	"hour_plural": "hours",
+	"minute": "minute",
+	"minute_plural": "minutes",
+	"second": "second",
+	"second_plural": "seconds"
+}

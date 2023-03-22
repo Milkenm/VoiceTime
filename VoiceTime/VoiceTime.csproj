@@ -171,15 +171,26 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\Class1.cs" />
     <Compile Include="Database\Db.cs" />
     <Compile Include="Database\VoicePerChannel.cs" />
     <Compile Include="Database\VoiceSession.cs" />
     <Compile Include="Database\VoiceTime.cs" />
+    <Compile Include="Locale\Translation.cs" />
+    <Compile Include="Locale\Locale.cs" />
+    <Compile Include="Locale\TranslationSchema.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Locale\Translations\en_EN_JSON.json" />
+    <None Include="Locale\Translations\pt_PT_JSON.json" />
     <None Include="packages.config" />
     <None Include="VoiceDB.db">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -187,6 +198,12 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Properties\MSTeams_ThreeOClock_ICO.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

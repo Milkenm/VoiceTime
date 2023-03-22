@@ -5,11 +5,15 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using Discord;
+using Discord.Net;
 using Discord.WebSocket;
+
+using Newtonsoft.Json;
 
 using ScriptsLibV2;
 
 using VoiceTime.Database;
+using VoiceTime.Locale;
 
 namespace VoiceTime
 {
@@ -18,9 +22,15 @@ namespace VoiceTime
 		private static readonly DiscordBot bot = new DiscordBot(Assembly.GetEntryAssembly());
 		private static readonly Dictionary<SocketUser, long> UsersInVoice = new Dictionary<SocketUser, long>();
 		private static readonly Dictionary<SocketUser, long> LastVoiceMove = new Dictionary<SocketUser, long>();
+		private static readonly Dictionary<Locale.Locale, Translation> Translations = new Dictionary<Locale.Locale, Translation>();
 
 		private static void Main(string[] args)
 		{
+			foreach (Locale.Locale locale in Enum.GetValues(typeof(Locale.Locale)))
+			{
+				Translations.Add(locale, Translation.LoadFromJson(locale));
+			}
+
 			Console.Title = $"VoiceTime {GetVersion()}";
 			Application.ApplicationExit += new EventHandler((se, ev) =>
 			{
@@ -29,6 +39,8 @@ namespace VoiceTime
 
 			bot.Client.Log += Client_Log;
 			bot.Client.UserVoiceStateUpdated += Client_UserVoiceStateUpdated;
+			bot.Client.Ready += Client_Ready;
+			bot.Client.SlashCommandExecuted += SlashCommandHandler;
 
 			bot.StartAsync();
 
@@ -41,6 +53,45 @@ namespace VoiceTime
 					}
 
 			Task.Delay(-1).Wait();
+		}
+
+		public static async Task Client_Ready()
+		{
+			SlashCommandBuilder slashLocale = new SlashCommandBuilder()
+			{
+				Name = "setlocale",
+				Description = "Set the language of the messages.",
+			};
+
+			SlashCommandOptionBuilder localeOptions = new SlashCommandOptionBuilder()
+			{
+				Name = "locale",
+				Description = "The language you wish to use.",
+				IsRequired = true,
+				Type = ApplicationCommandOptionType.String,
+			};
+			foreach (Locale.Locale locale in Enum.GetValues(typeof(Locale.Locale)))
+			{
+				string localeName = locale.ToString();
+				localeOptions.AddChoice(localeName, localeName);
+			}
+
+			slashLocale.AddOption(localeOptions);
+
+			try
+			{
+				await bot.Client.CreateGlobalApplicationCommandAsync(slashLocale.Build());
+			}
+			catch (HttpException ex)
+			{
+				string json = JsonConvert.SerializeObject(ex.Message, Formatting.Indented);
+				Console.WriteLine(json);
+			}
+		}
+
+		private static async Task SlashCommandHandler(SocketSlashCommand command)
+		{
+			await command.RespondAsync($"You executed {command.Data.Name}!");
 		}
 
 		private static async Task Client_UserVoiceStateUpdated(SocketUser user, SocketVoiceState previousChannel, SocketVoiceState newChannel)
